@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Circuit Visualizations</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+            color: #fff;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        .task-section {
+            margin-bottom: 50px;
+        }
+        .task-header {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4a90d9;
+            color: #4a90d9;
+        }
+        .model-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .model-header {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        .circuit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        .circuit-link {
+            display: block;
+            padding: 15px;
+            background: rgba(74, 144, 217, 0.1);
+            border: 1px solid rgba(74, 144, 217, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            color: #e0e0e0;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .circuit-link:hover {
+            background: rgba(74, 144, 217, 0.2);
+            border-color: #4a90d9;
+            transform: translateY(-2px);
+        }
+        .circuit-link.best {
+            background: rgba(233, 69, 96, 0.1);
+            border-color: rgba(233, 69, 96, 0.3);
+        }
+        .circuit-link.best:hover {
+            background: rgba(233, 69, 96, 0.2);
+            border-color: #e94560;
+        }
+        .circuit-label {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .circuit-sublabel {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        .legend {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+        }
+        .legend-item {
+            display: inline-block;
+            margin: 0 15px;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .legend-color.best { background: rgba(233, 69, 96, 0.5); border: 1px solid #e94560; }
+        .legend-color.seed { background: rgba(74, 144, 217, 0.5); border: 1px solid #4a90d9; }
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Circuit Visualizations</h1>
+        <p class="subtitle">Interactive circuit diagrams from sparse pretrained models</p>
+        
+        <div class="legend">
+            <span class="legend-item"><span class="legend-color best"></span>Best Checkpoint</span>
+            <span class="legend-item"><span class="legend-color seed"></span>Individual Seeds</span>
+        </div>
+
+        <div class="task-section">
+            <h2 class="task-header">IOI Task</h2>
+
+            <div class="model-section">
+                <h3 class="model-header">1024-dim Model</h3>
+                <div class="circuit-grid">
+
+                    <a href="ioi/d1024/best.html" class="circuit-link best" target="_blank">
+                        <div class="circuit-label">Best Checkpoint</div>
+                        <div class="circuit-sublabel">Optimized</div>
+                    </a>
+
+                    <a href="ioi/d1024/seed0.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 0</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="ioi/d1024/seed1.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 1</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="ioi/d1024/seed2.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 2</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="ioi/d1024/seed3.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 3</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="ioi/d1024/seed4.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 4</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                </div>
+            </div>
+
+            <div class="model-section">
+                <h3 class="model-header">3072-dim Model</h3>
+                <div class="circuit-grid">
+
+                    <a href="ioi/d3072/best.html" class="circuit-link best" target="_blank">
+                        <div class="circuit-label">Best Checkpoint</div>
+                        <div class="circuit-sublabel">Optimized</div>
+                    </a>
+
+                    <a href="ioi/d3072/seed0.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 0</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="ioi/d3072/seed1.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 1</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="ioi/d3072/seed2.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 2</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="ioi/d3072/seed4.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 4</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="ioi/d3072/seed5.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 5</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="task-section">
+            <h2 class="task-header">Pronoun Task</h2>
+
+            <div class="model-section">
+                <h3 class="model-header">1024-dim Model</h3>
+                <div class="circuit-grid">
+
+                    <a href="pronoun/d1024/best.html" class="circuit-link best" target="_blank">
+                        <div class="circuit-label">Best Checkpoint</div>
+                        <div class="circuit-sublabel">Optimized</div>
+                    </a>
+
+                    <a href="pronoun/d1024/seed0.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 0</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="pronoun/d1024/seed1.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 1</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="pronoun/d1024/seed2.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 2</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="pronoun/d1024/seed5.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 5</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="pronoun/d1024/seed6.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 6</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                </div>
+            </div>
+
+            <div class="model-section">
+                <h3 class="model-header">3072-dim Model</h3>
+                <div class="circuit-grid">
+
+                    <a href="pronoun/d3072/best.html" class="circuit-link best" target="_blank">
+                        <div class="circuit-label">Best Checkpoint</div>
+                        <div class="circuit-sublabel">Optimized</div>
+                    </a>
+
+                    <a href="pronoun/d3072/seed0.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 0</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="pronoun/d3072/seed1.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 1</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="pronoun/d3072/seed2.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 2</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="pronoun/d3072/seed4.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 4</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                    <a href="pronoun/d3072/seed5.html" class="circuit-link" target="_blank">
+                        <div class="circuit-label">Seed 5</div>
+                        <div class="circuit-sublabel">Repetition</div>
+                    </a>
+
+                </div>
+            </div>
+
+        </div>
+
+        <footer>
+            Generated with sparse pretraining circuit extraction tools
+        </footer>
+    </div>
+</body>
+</html>
