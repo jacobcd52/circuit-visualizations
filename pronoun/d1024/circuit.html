@@ -721,35 +721,13 @@
                 }
             }
             
-            // Helper to check if an edge is downstream of another through residual channel
-            // resid_pre < resid_mid < resid_post in the same layer
-            const positionOrder = {'pre': 0, 'mid': 1, 'post': 2};
-            function isDownstream(writerEdge, readerEdge) {
-                const writerLayer = writerEdge.source_layer;
-                const writerPos = writerEdge.resid_position;
-                const readerLayer = readerEdge.target_layer;
-                const readerPos = readerEdge.resid_position;
-                if (readerLayer > writerLayer) return true;
-                if (readerLayer === writerLayer && positionOrder[readerPos] > positionOrder[writerPos]) return true;
-                return false;
-            }
-            function isUpstream(readerEdge, writerEdge) {
-                const readerLayer = readerEdge.target_layer;
-                const readerPos = readerEdge.resid_position;
-                const writerLayer = writerEdge.source_layer;
-                const writerPos = writerEdge.resid_position;
-                if (writerLayer < readerLayer) return true;
-                if (writerLayer === readerLayer && positionOrder[writerPos] < positionOrder[readerPos]) return true;
-                return false;
-            }
-            
             // Find channels this node connects to
             edges.forEach(e => {
                 if (e.source_id === node.node_id) {
                     allConnectedEdges.add(e);
                     const targetNode = nodeById.get(e.target_id);
                     if (targetNode?.location === 'resid_channel') {
-                        // Node writes to this channel - find downstream readers only
+                        // Node writes to this channel - find all readers (downstream)
                         connectedChannels.add(e.target_id);
                         // Get Y where this node connects to the channel
                         const sourceY = getChannelY(e, false);
@@ -757,14 +735,11 @@
                         
                         edges.forEach(e2 => {
                             if (e2.source_id === e.target_id && e2.target_id !== node.node_id) {
-                                // Only include if actually downstream in data flow
-                                if (isDownstream(e, e2)) {
-                                    downstreamNodes.add(e2.target_id);
-                                    allConnectedEdges.add(e2);
-                                    // Get Y where downstream node connects to the channel
-                                    const targetY = getChannelY(e2, true);
-                                    updateChannelYRange(e.target_id, targetY);
-                                }
+                                downstreamNodes.add(e2.target_id);
+                                allConnectedEdges.add(e2);
+                                // Get Y where downstream node connects to the channel
+                                const targetY = getChannelY(e2, true);
+                                updateChannelYRange(e.target_id, targetY);
                             }
                         });
                     } else {
@@ -775,7 +750,7 @@
                     allConnectedEdges.add(e);
                     const sourceNode = nodeById.get(e.source_id);
                     if (sourceNode?.location === 'resid_channel') {
-                        // Node reads from this channel - find upstream writers only
+                        // Node reads from this channel - find all writers (upstream)
                         connectedChannels.add(e.source_id);
                         // Get Y where this node connects to the channel
                         const targetY = getChannelY(e, true);
@@ -783,14 +758,11 @@
                         
                         edges.forEach(e2 => {
                             if (e2.target_id === e.source_id && e2.source_id !== node.node_id) {
-                                // Only include if actually upstream in data flow
-                                if (isUpstream(e, e2)) {
-                                    upstreamNodes.add(e2.source_id);
-                                    allConnectedEdges.add(e2);
-                                    // Get Y where upstream node connects to the channel
-                                    const sourceY = getChannelY(e2, false);
-                                    updateChannelYRange(e.source_id, sourceY);
-                                }
+                                upstreamNodes.add(e2.source_id);
+                                allConnectedEdges.add(e2);
+                                // Get Y where upstream node connects to the channel
+                                const sourceY = getChannelY(e2, false);
+                                updateChannelYRange(e.source_id, sourceY);
                             }
                         });
                     } else {
