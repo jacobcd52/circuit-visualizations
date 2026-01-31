@@ -183,7 +183,7 @@
         const NODE_SPACING = 14;
         const HEAD_GAP = 30;
         const SECTION_GAP = 30;  // Gap between attention and MLP sections
-        const LAYER_GAP = 10;  // Small gap between layers
+        const LAYER_GAP = 70;  // Gap between layers (must be > 2*RESID_OFFSET to prevent overlap)
         const COLUMN_GAP = 50;  // Gap between mask nodes and resid channels
         const EMBED_ZONE_HEIGHT = 30;  // Minimal space for embed/unembed nodes
         const EMBED_NODE_SPACING = 35;  // Horizontal spacing between embed nodes
