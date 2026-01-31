@@ -328,22 +328,25 @@
                     maxY: qkvY + NODE_SPACING + 8
                 };
                 
-                // K nodes (left column within head) - stack horizontally if multiple
+                // K nodes (left column within head) - spread vertically if multiple
+                const kSpread = kNodes.length > 1 ? 8 : 0;
                 kNodes.forEach((n, idx) => {
                     n.x = headX - NODE_SPACING;
-                    n.y = qkvY;  // All at same Y
+                    n.y = qkvY + (idx - (kNodes.length - 1) / 2) * kSpread;
                 });
                 
-                // Q nodes (center column within head)
+                // Q nodes (center column within head) - spread vertically if multiple
+                const qSpread = qNodes.length > 1 ? 8 : 0;
                 qNodes.forEach((n, idx) => {
                     n.x = headX;
-                    n.y = qkvY;  // All at same Y
+                    n.y = qkvY + (idx - (qNodes.length - 1) / 2) * qSpread;
                 });
                 
-                // V nodes (right column within head)
+                // V nodes (right column within head) - spread vertically if multiple
+                const vSpread = vNodes.length > 1 ? 8 : 0;
                 vNodes.forEach((n, idx) => {
                     n.x = headX + NODE_SPACING;
-                    n.y = qkvY;  // All at same Y
+                    n.y = qkvY + (idx - (vNodes.length - 1) / 2) * vSpread;
                 });
             });
             
@@ -727,16 +730,20 @@
                         // Node writes to this channel - find all readers (downstream)
                         connectedChannels.add(e.target_id);
                         // Get Y where this node connects to the channel
-                        const sourceY = getChannelY(e, false);
-                        updateChannelYRange(e.target_id, sourceY);
+                        const writeY = getChannelY(e, false);
+                        updateChannelYRange(e.target_id, writeY);
                         
                         edges.forEach(e2 => {
                             if (e2.source_id === e.target_id && e2.target_id !== node.node_id) {
-                                downstreamNodes.add(e2.target_id);
-                                allConnectedEdges.add(e2);
                                 // Get Y where downstream node connects to the channel
-                                const targetY = getChannelY(e2, true);
-                                updateChannelYRange(e.target_id, targetY);
+                                const readY = getChannelY(e2, true);
+                                // Only include TRUE downstream nodes (read position is ABOVE write position)
+                                // In SVG coordinates, smaller Y = higher on screen = later in forward pass
+                                if (readY < writeY) {
+                                    downstreamNodes.add(e2.target_id);
+                                    allConnectedEdges.add(e2);
+                                    updateChannelYRange(e.target_id, readY);
+                                }
                             }
                         });
                     } else {
@@ -750,16 +757,20 @@
                         // Node reads from this channel - find all writers (upstream)
                         connectedChannels.add(e.source_id);
                         // Get Y where this node connects to the channel
-                        const targetY = getChannelY(e, true);
-                        updateChannelYRange(e.source_id, targetY);
+                        const readY = getChannelY(e, true);
+                        updateChannelYRange(e.source_id, readY);
                         
                         edges.forEach(e2 => {
                             if (e2.target_id === e.source_id && e2.source_id !== node.node_id) {
-                                upstreamNodes.add(e2.source_id);
-                                allConnectedEdges.add(e2);
                                 // Get Y where upstream node connects to the channel
-                                const sourceY = getChannelY(e2, false);
-                                updateChannelYRange(e.source_id, sourceY);
+                                const writeY = getChannelY(e2, false);
+                                // Only include TRUE upstream nodes (write position is BELOW read position)
+                                // In SVG coordinates, larger Y = lower on screen = earlier in forward pass
+                                if (writeY > readY) {
+                                    upstreamNodes.add(e2.source_id);
+                                    allConnectedEdges.add(e2);
+                                    updateChannelYRange(e.source_id, writeY);
+                                }
                             }
                         });
                     } else {
