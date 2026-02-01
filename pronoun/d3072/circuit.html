@@ -737,9 +737,10 @@
                             if (e2.source_id === e.target_id && e2.target_id !== node.node_id) {
                                 // Get Y where downstream node connects to the channel
                                 const readY = getChannelY(e2, true);
-                                // Only include TRUE downstream nodes (read position is ABOVE write position)
+                                // Only include TRUE downstream nodes (read position is ABOVE or AT write position)
                                 // In SVG coordinates, smaller Y = higher on screen = later in forward pass
-                                if (readY < writeY) {
+                                // Use <= to include edges at same Y (e.g., layer boundaries)
+                                if (readY <= writeY) {
                                     downstreamNodes.add(e2.target_id);
                                     allConnectedEdges.add(e2);
                                     updateChannelYRange(e.target_id, readY);
@@ -764,9 +765,10 @@
                             if (e2.target_id === e.source_id && e2.source_id !== node.node_id) {
                                 // Get Y where upstream node connects to the channel
                                 const writeY = getChannelY(e2, false);
-                                // Only include TRUE upstream nodes (write position is BELOW read position)
+                                // Only include TRUE upstream nodes (write position is BELOW or AT read position)
                                 // In SVG coordinates, larger Y = lower on screen = earlier in forward pass
-                                if (writeY > readY) {
+                                // Use >= to include edges at same Y (e.g., embed edges at channel bottom)
+                                if (writeY >= readY) {
                                     upstreamNodes.add(e2.source_id);
                                     allConnectedEdges.add(e2);
                                     updateChannelYRange(e.source_id, writeY);
