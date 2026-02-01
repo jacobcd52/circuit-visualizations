@@ -148,7 +148,7 @@
         
         // Dashboard type toggle state
         // Types: 'pretrain_original', 'task_original', 'task_pruned'
-        let currentDashboardType = 'pretrain_original';
+        let currentDashboardType = 'task_pruned';
         let currentDashboardNode = null;
         
         function setDashboardType(type) {
@@ -182,8 +182,8 @@
         // Layout constants
         const NODE_SPACING = 14;
         const HEAD_GAP = 30;
-        const SECTION_GAP = 40;
-        const LAYER_GAP = 15;  // Reduced space between layers
+        const SECTION_GAP = 30;  // Gap between attention and MLP sections
+        const LAYER_GAP = 70;  // Gap between layers (must be > 2*RESID_OFFSET to prevent overlap)
         const COLUMN_GAP = 50;  // Gap between mask nodes and resid channels
         const EMBED_ZONE_HEIGHT = 30;  // Minimal space for embed/unembed nodes
         const EMBED_NODE_SPACING = 35;  // Horizontal spacing between embed nodes
@@ -212,8 +212,7 @@
         const metadata = graphData.metadata;
         const d_head = metadata.d_head || 64;
         
-        document.getElementById("graph-summary").textContent = 
-            `${nodes.length} nodes, ${edges.length} edges, ${metadata.n_layers} layers`;
+        // Node/edge/layer count (removed header display)
         
         // Categorize nodes
         const embedNodes = nodes.filter(n => n.location === 'embed');
@@ -245,13 +244,10 @@
             return Array.from(heads).sort((a, b) => a - b);
         }
         
-        // Calculate layer heights dynamically
+        // Use constant layer height for consistent vertical spacing
+        const LAYER_HEIGHT = 160;  // Fixed height per layer - compact to match intra-layer spacing
         function calcLayerHeight(layer) {
-            const heads = getActiveHeads(layer);
-            const attnHeight = Math.max(heads.length * (NODE_SPACING * 3 + HEAD_GAP), 50);
-            const mlpNodes = (maskSiteByLayer[layer] || []).filter(n => n.location.startsWith('mlp'));
-            const mlpHeight = mlpNodes.length > 0 ? 80 : 0;
-            return attnHeight + mlpHeight + SECTION_GAP * 3;
+            return LAYER_HEIGHT;
         }
         
         // Calculate total height
@@ -303,16 +299,19 @@
             let currentY = layerTop + calcLayerHeight(layer);  // Start from bottom
             
             // attn_in at bottom of attention section - THIS IS WHERE resid_pre ALIGNS
-            const attnInY = currentY - 15;
+            const attnInY = currentY - 10;
             const attnInNodes = layerNodes.filter(n => n.location === 'attn_in');
             attnInNodes.forEach((n, idx) => {
                 n.y = attnInY;
                 const groupW = attnInNodes.length * NODE_SPACING;
                 n.x = leftColumnX - groupW / 2 + idx * NODE_SPACING + NODE_SPACING / 2;
             });
-            currentY -= 35;
+            currentY -= 25;
             
             // K, Q, V organized by head (K left, Q right of K, V rightmost)
+            // Fixed Y position for Q/K/V - they spread horizontally, not vertically
+            const qkvY = currentY - 20;  // Fixed Y for all Q/K/V nodes
+            
             heads.forEach((headIdx, hi) => {
                 const headX = leftColumnX - (heads.length - 1) * (NODE_SPACING * 3 + HEAD_GAP) / 2 + hi * (NODE_SPACING * 3 + HEAD_GAP);
                 
@@ -323,37 +322,37 @@
                 // Store head bounding box info for dotted box drawing
                 if (!headBoundingBoxes[layer]) headBoundingBoxes[layer] = {};
                 headBoundingBoxes[layer][headIdx] = {
-                    minX: headX - NODE_SPACING - 8,
-                    maxX: headX + NODE_SPACING + 8,
-                    minY: currentY - Math.max(qNodes.length, kNodes.length, vNodes.length) * NODE_SPACING - 8,
-                    maxY: currentY + 8
+                    minX: headX - NODE_SPACING * 1.5 - 8,
+                    maxX: headX + NODE_SPACING * 1.5 + 8,
+                    minY: qkvY - NODE_SPACING - 8,
+                    maxY: qkvY + NODE_SPACING + 8
                 };
                 
-                // K nodes (left)
+                // K nodes (left column within head) - spread vertically if multiple
+                const kSpread = kNodes.length > 1 ? 8 : 0;
                 kNodes.forEach((n, idx) => {
                     n.x = headX - NODE_SPACING;
-                    n.y = currentY - idx * NODE_SPACING;
+                    n.y = qkvY + (idx - (kNodes.length - 1) / 2) * kSpread;
                 });
                 
-                // Q nodes (right of K, same y)
+                // Q nodes (center column within head) - spread vertically if multiple
+                const qSpread = qNodes.length > 1 ? 8 : 0;
                 qNodes.forEach((n, idx) => {
                     n.x = headX;
-                    n.y = currentY - idx * NODE_SPACING;
+                    n.y = qkvY + (idx - (qNodes.length - 1) / 2) * qSpread;
                 });
                 
-                // V nodes (rightmost)
+                // V nodes (right column within head) - spread vertically if multiple
+                const vSpread = vNodes.length > 1 ? 8 : 0;
                 vNodes.forEach((n, idx) => {
                     n.x = headX + NODE_SPACING;
-                    n.y = currentY - idx * NODE_SPACING;
+                    n.y = qkvY + (idx - (vNodes.length - 1) / 2) * vSpread;
                 });
             });
             
-            const maxQKVNodes = Math.max(
-                ...heads.map(h => layerNodes.filter(n => ['attn_q', 'attn_k', 'attn_v'].includes(n.location) && n.head_idx === h).length / 3)
-            , 1);
-            currentY -= maxQKVNodes * NODE_SPACING + 25;
+            currentY -= 55;  // Spacing after Q/K/V section - ensure attn_out is above dotted head boxes
             
-            // attn_out above Q/K/V
+            // attn_out above Q/K/V (outside the dotted head boxes since attn_out has no head index)
             const attnOutNodes = layerNodes.filter(n => n.location === 'attn_out');
             const attnOutY = currentY;
             attnOutNodes.forEach((n, idx) => {
@@ -361,22 +360,22 @@
                 const groupW = attnOutNodes.length * NODE_SPACING;
                 n.x = leftColumnX - groupW / 2 + idx * NODE_SPACING + NODE_SPACING / 2;
             });
-            currentY -= SECTION_GAP / 2;
+            currentY -= SECTION_GAP / 2;  // 15px gap
             
             // Gap between attention and MLP - attn_out writes BELOW where mlp_in reads
-            const attnOutWriteY = currentY + 10;  // Where attn_out connects to residual (lower)
-            currentY -= SECTION_GAP / 2;
+            const attnOutWriteY = currentY + 8;  // Where attn_out connects to residual (lower)
+            currentY -= SECTION_GAP / 2;  // 15px gap
             
             // MLP section: mlp_in -> mlp_neuron -> mlp_out (bottom to top)
             const mlpInNodes = layerNodes.filter(n => n.location === 'mlp_in');
             const mlpInY = currentY;
-            const mlpInReadY = currentY + 10;  // Where mlp_in reads from residual (higher than attn_out write)
+            const mlpInReadY = currentY + 8;  // Where mlp_in reads from residual (higher than attn_out write)
             mlpInNodes.forEach((n, idx) => {
                 n.y = mlpInY;
                 const groupW = mlpInNodes.length * NODE_SPACING;
                 n.x = leftColumnX - groupW / 2 + idx * NODE_SPACING + NODE_SPACING / 2;
             });
-            currentY -= 25;
+            currentY -= 20;
             
             const mlpNeuronNodes = layerNodes.filter(n => n.location === 'mlp_neuron');
             mlpNeuronNodes.forEach((n, idx) => {
@@ -384,7 +383,7 @@
                 const groupW = mlpNeuronNodes.length * NODE_SPACING;
                 n.x = leftColumnX - groupW / 2 + idx * NODE_SPACING + NODE_SPACING / 2;
             });
-            currentY -= 25;
+            currentY -= 20;
             
             const mlpOutNodes = layerNodes.filter(n => n.location === 'mlp_out');
             const mlpOutY = currentY;
@@ -396,7 +395,7 @@
             
             // Store Y positions for residual nodes
             // Separate positions for reading vs writing to avoid overlapping edge endpoints
-            const RESID_OFFSET = 45;  // Larger vertical offset for steeper slant
+            const RESID_OFFSET = 30;  // Vertical offset for residual connections
             layerYPositions[layer] = {
                 resid_pre_y: attnInY + RESID_OFFSET,      // Below attn_in (attn_in reads from resid_pre)
                 attn_out_write_y: attnOutWriteY,          // Where attn_out writes to resid_mid (lower)
@@ -731,16 +730,20 @@
                         // Node writes to this channel - find all readers (downstream)
                         connectedChannels.add(e.target_id);
                         // Get Y where this node connects to the channel
-                        const sourceY = getChannelY(e, false);
-                        updateChannelYRange(e.target_id, sourceY);
+                        const writeY = getChannelY(e, false);
+                        updateChannelYRange(e.target_id, writeY);
                         
                         edges.forEach(e2 => {
                             if (e2.source_id === e.target_id && e2.target_id !== node.node_id) {
-                                downstreamNodes.add(e2.target_id);
-                                allConnectedEdges.add(e2);
                                 // Get Y where downstream node connects to the channel
-                                const targetY = getChannelY(e2, true);
-                                updateChannelYRange(e.target_id, targetY);
+                                const readY = getChannelY(e2, true);
+                                // Only include TRUE downstream nodes (read position is ABOVE write position)
+                                // In SVG coordinates, smaller Y = higher on screen = later in forward pass
+                                if (readY < writeY) {
+                                    downstreamNodes.add(e2.target_id);
+                                    allConnectedEdges.add(e2);
+                                    updateChannelYRange(e.target_id, readY);
+                                }
                             }
                         });
                     } else {
@@ -754,16 +757,20 @@
                         // Node reads from this channel - find all writers (upstream)
                         connectedChannels.add(e.source_id);
                         // Get Y where this node connects to the channel
-                        const targetY = getChannelY(e, true);
-                        updateChannelYRange(e.source_id, targetY);
+                        const readY = getChannelY(e, true);
+                        updateChannelYRange(e.source_id, readY);
                         
                         edges.forEach(e2 => {
                             if (e2.target_id === e.source_id && e2.source_id !== node.node_id) {
-                                upstreamNodes.add(e2.source_id);
-                                allConnectedEdges.add(e2);
                                 // Get Y where upstream node connects to the channel
-                                const sourceY = getChannelY(e2, false);
-                                updateChannelYRange(e.source_id, sourceY);
+                                const writeY = getChannelY(e2, false);
+                                // Only include TRUE upstream nodes (write position is BELOW read position)
+                                // In SVG coordinates, larger Y = lower on screen = earlier in forward pass
+                                if (writeY > readY) {
+                                    upstreamNodes.add(e2.source_id);
+                                    allConnectedEdges.add(e2);
+                                    updateChannelYRange(e.source_id, writeY);
+                                }
                             }
                         });
                     } else {
